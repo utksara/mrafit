@@ -1,5 +1,3 @@
-import sys
-sys.path.append('./MRA_classes/gausslet_creator')
 import numpy as np
 import wavelet_bases
 import utils

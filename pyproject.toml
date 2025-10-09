@@ -11,7 +11,9 @@ dependencies = [
     "numpy (>=2.3.2,<3.0.0)",
     "scipy (>=1.16.1,<2.0.0)",
     "seaborn (>=0.13.2,<0.14.0)",
-    "pyyaml (>=6.0,<7.0)"
+    "pyyaml (>=6.0,<7.0)",
+    "scikit-learn (>=1.7.1,<2.0.0)",
+    "pyqt6 (>=6.9.1,<7.0.0)"
 ]
 
 license = { text = "MIT" }
@@ -20,6 +22,7 @@ license = { text = "MIT" }
 
 [tool.poetry.group.dev.dependencies]
 seaborn = "^0.13.2"
+ipykernel = "^6.30.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
