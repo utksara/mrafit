@@ -3,11 +3,9 @@
 Fit curves with high precision using [Multi resolution analysis](https://www.sciencedirect.com/topics/mathematics/multiresolution-analysis) and [Wavelet transform](https://en.wikipedia.org/wiki/Wavelet_transform). The module direclty implements Orthongonal Gausslets as described in the [paper](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.99.081110), however in addition the module also have hat basis function, and also allow to construct custom Gausslets.
 
 
-# Examples
+# Use cases
 
-# Use case
-
-###Fitting curve using basis function
+### Approximating curve using basis function
     
 mrafit allows to reconstruct a curve by expressing them in terms of localized basis function. In other words a curve represented by list of points $x_i$, $y_i$ can be represented as a much smaller list of coefficients $c_i$ which reduces dimensionality of representation. Same can be done for any 3-d curve represneted by $x_i$, $y_i$, $z_i$.
  
