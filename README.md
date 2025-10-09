@@ -2,6 +2,11 @@
 
 Fit curves with high precision using [Multi resolution analysis](https://www.sciencedirect.com/topics/mathematics/multiresolution-analysis) and [Wavelet transform](https://en.wikipedia.org/wiki/Wavelet_transform). The module direclty implements Orthongonal Gausslets as described in the [paper](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.99.081110), however in addition the module also have hat basis function, and also allow to construct custom Gausslets.
 
+# Installation
+
+simply run
+
+```pip install mrafit```
 
 # Use cases
 
