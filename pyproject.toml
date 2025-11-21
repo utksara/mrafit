@@ -1,6 +1,6 @@
 [project]
 name = "mrafit"
-version = "0.1.0"
+version = "1.1.0"
 description = ""
 authors = [
     {name = "Utkarsh Saraswat",email = "utkarsh.saraswat@lrz.de"}
