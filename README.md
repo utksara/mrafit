@@ -31,7 +31,7 @@ import mrafit.wavelet_bases as wavelet_bases
 From wavelet_bases, an instance of any available basis can be created, for example to use orthogonal gausslet basis, we can define
 
 ```
-gb = wavelet_bases.Gausslet_Basis()
+gb = wavelet_bases.GaussletBasis()
 ```
 
 To approximate any given function defined over domain \(-1, 1\) with respect to a basis
@@ -51,7 +51,7 @@ N = 800
 error_bound = 10e-2 * resolution
 
 """ Use this section if you want to test gausslet with Stephen White's coefficients"""
-gb = wavelet_bases.Gausslet_Basis(resolution=resolution, wavelet_coefficients=coeffs[int(len(coeffs)/2):])
+gb = wavelet_bases.GaussletBasis(resolution=resolution, wavelet_coefficients=coeffs[int(len(coeffs)/2):])
 
 """ Sample function to be approximated, you can change it as per your need"""
 func = lambda x : np.exp(-x**2/3) * (x**2 - x + 1)

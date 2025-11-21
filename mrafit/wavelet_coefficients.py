@@ -64,12 +64,12 @@ def gausslet_recursion(init_basis, iterations, u4basis, truncate = 63):
     of times
 
     Args: 
-        init_basis (wavelet_bases.Gausslet_Basis) : initial gausslet basis
+        init_basis (wavelet_bases.GaussletBasis) : initial gausslet basis
         iterations (int) : total number of iterations for each step
         truncate (int) : truncate lenght of coefficients using truncate_array function
 
     Returns :
-        gausslet basis with new coefficients (wavelet_bases.Gausslet_Basis), 
+        gausslet basis with new coefficients (wavelet_bases.GaussletBasis), 
         approximate fit of u4basis with the new gausslet basis (numpy.ndarray)
     '''
     
@@ -102,7 +102,7 @@ def gausslet_recursion(init_basis, iterations, u4basis, truncate = 63):
         coeff_parent = coeffs
         new_basis_coeffs = recursive_coeffs (coeff_parent, coeff_child, 3)
         new_basis_coeffs = truncate_array(new_basis_coeffs, truncate)
-        init_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(new_basis_coeffs[int(len(new_basis_coeffs)/2):]))
+        init_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(new_basis_coeffs[int(len(new_basis_coeffs)/2):]))
         # print(error)
     return init_basis, approx_func
 
@@ -139,7 +139,7 @@ def gausslet_recursion(init_basis, iterations, u4basis, truncate = 63):
 # '''
 # coeffs, new_func, vectorized_basis = utils.vector_function_fit(X, u4basis.wavelet_func, lambda x: np.exp(-0.5*x**2) \
 #                                              , width, vector_dim, dilation)
-# gausslet_basis2 = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(coeffs[int(len(coeffs)/2):]))
+# gausslet_basis2 = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(coeffs[int(len(coeffs)/2):]))
 
 # iterations = 0
 # new_gausslet_basis, approx_func = gausslet_recursion(gausslet_basis2, iterations)
@@ -153,7 +153,7 @@ def get_gausslet_coefficients(depth = 4):
     
     u4basis  = wavelet_bases.Ugeneric_Basis(basis_coeffs=unitary_circ_coefficient.get_ugeneric_coefficients(depth), \
                                         resolution = 3)    
-    # gausslet_basis = wavelet_bases.Gausslet_Basis(resolution = 3)
+    # gausslet_basis = wavelet_bases.GaussletBasis(resolution = 3)
 
     L1 = -10
     L2 = 10
@@ -166,15 +166,15 @@ def get_gausslet_coefficients(depth = 4):
 
     coeffs, new_func, vectorized_basis = utils.vector_function_fit(X, u4basis.wavelet_func, lambda x: np.exp(-0.5*x**2) \
                                              , width, vector_dim, dilation)
-    # new_gausslet_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(coeffs[int(len(coeffs)/2):]))
+    # new_gausslet_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(coeffs[int(len(coeffs)/2):]))
 
     def objective_ortho(coeffs):
-        gausslet_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(coeffs))
+        gausslet_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(coeffs))
         score = gausslet_basis.get_orthogonality()
         return abs(1 - score)
     
     def objective_comple(coeffs):
-        gausslet_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(coeffs))
+        gausslet_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(coeffs))
         score = gausslet_basis.get_completeness()
         return abs(1 - score)
     
@@ -183,7 +183,7 @@ def get_gausslet_coefficients(depth = 4):
 
     coeffs = coeffs[int(len(coeffs)/2):]
     coeffs = coeffs[0:7]
-    new_gausslet_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(coeffs))
+    new_gausslet_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(coeffs))
     max_orthogonality = new_gausslet_basis.get_orthogonality()
     max_completeness = new_gausslet_basis.get_completeness()
     list_of_elements = [[k - 0.2,k + 0.2] for k in coeffs]
@@ -194,12 +194,12 @@ def get_gausslet_coefficients(depth = 4):
     final_coeffs = coeffs
     for coeffs in coeffs_list:
         results = minimize(objective, list(coeffs), bounds=bounds, method = 'Nelder-Mead', options={'maxiter':1000}, tol=10e-5)
-        new_gausslet_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(results.x))
+        new_gausslet_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(results.x))
         orthogonality = new_gausslet_basis.get_orthogonality()
         completeness = new_gausslet_basis.get_completeness()
         if orthogonality > max_orthogonality and completeness > max_completeness:
             # results = minimize(objective_comple, results.x, bounds=bounds, method = 'Nelder-Mead', options={'maxiter':1000}, tol=10e-5)
-            # new_gausslet_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(results.x))
+            # new_gausslet_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(results.x))
             # orthogonality = new_gausslet_basis.get_orthogonality()
             
             overalap_matr = new_gausslet_basis.get_overlap_matrix(np.linspace(-10, 10, 100))
@@ -210,7 +210,7 @@ def get_gausslet_coefficients(depth = 4):
         if orthogonality >= 0.999999 and completeness >= 0.999999:
             break
 
-    new_gausslet_basis = wavelet_bases.Gausslet_Basis(resolution=3, wavelet_coefficients = list(final_coeffs))
+    new_gausslet_basis = wavelet_bases.GaussletBasis(resolution=3, wavelet_coefficients = list(final_coeffs))
     overalap_matr = new_gausslet_basis.get_overlap_matrix(np.linspace(-10, 10, 200))
     
     import matplotlib.pyplot as plt

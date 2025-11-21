@@ -8,13 +8,13 @@ def plot(func, start, n, unit, name = "fig"):
     plt.savefig(name + ".png")
     plt.show()
 
-def get_wavelet_values(wavelet, i, j, dim, start, end):
+def _get_wavelet_values(wavelet, i, j, dim, start, end):
     if(i > wavelet.dim or j > wavelet.dim):
         execption = ValueError("Invalid wavelent dimensions " , i , " and ", j, " for wavelet dimension =  ", wavelet.dim )
         return execption
     X = np.linspace(start, end, dim)
     Y = np.linspace(start, end, dim)    
-    return wavelet.get_wavefunc_data(i, j, X, Y)
+    return wavelet.get_wavefunction_values(i, j, X, Y)
 
 def get_delta_values(wavelet, i, j, dim):
     if(i > wavelet.dim or j > wavelet.dim):
@@ -25,13 +25,13 @@ def get_delta_values(wavelet, i, j, dim):
     return wavelet.get_delta_data(i, j, X, Y)
     
 def get_kinetic_term(wavelet, coord1, coord2, resolution_dim):
-    psi1 = get_wavelet_values(wavelet, coord1[0], coord1[1], resolution_dim)
+    psi1 = _get_wavelet_values(wavelet, coord1[0], coord1[1], resolution_dim)
     del_psi2 = get_delta_values(wavelet, coord2[0], coord2[1], resolution_dim)
     integral = 0.5*(1/(resolution_dim*resolution_dim))*sum(sum(psi1*del_psi2))
     return integral
 
 def plot_wavelet(wavelet, i, j, dim, start = 0, end = 1, title = "figure1"):
-    data = get_wavelet_values(wavelet, i, j, dim, start, end)
+    data = _get_wavelet_values(wavelet, i, j, dim, start, end)
     sns.heatmap(data, cbar=True, annot=False)
     plt.title(title)
     plt.show()
@@ -46,7 +46,7 @@ def plot_wavelet_comb(wavelet, index_list, coefficient_list, resolution_dim, sta
         if(i > wavelet.dim or j > wavelet.dim):
             execption = ValueError("Invalid wavelent dimensions " , i , " and ", j, " for wavelet dimension =  ", wavelet.dim )
             return execption    
-        data += coefficient*wavelet.get_wavefunc_data(i, j, X, Y)
+        data += coefficient*wavelet.get_wavefunction_values(i, j, X, Y)
     sns.heatmap(data, cbar=True, annot=False)
     # plt.savefig(title + ".png")
     plt.title(title)
@@ -59,11 +59,11 @@ def fit_interpol(y0, y1, a):
 def fit_select(y0, y1, a):
     return ((1 - a) > 0.5)*y0 + (a > 0.5)*y1
 
-def scaled_sampling(func_val, X, translate, scaling = 1):
+def scaled_sampling(function_val, X, translate, scaling = 1):
     N = len(X)
     X = X - (X[-1] + X[0])/2 #normalization
-    if (N!= len(func_val)):
-        print("func_val and X not of same length! ")
+    if (N!= len(function_val)):
+        raise ValueError("function_val and X not of same length! ")
         return
     fitting_func = fit_select
     if scaling < 1:
@@ -76,7 +76,7 @@ def scaled_sampling(func_val, X, translate, scaling = 1):
         shifted_i = int((N - 1)*(x_new - X[0])/(X[-1] - X[0]))
         shifted_i = min(max(shifted_i, 0), N - 2)
         a = (x_new - X[shifted_i])/dx
-        y[i] =  fitting_func( func_val[shifted_i], func_val[shifted_i + 1], a)
+        y[i] =  fitting_func( function_val[shifted_i], function_val[shifted_i + 1], a)
     return y
 
 
@@ -129,14 +129,14 @@ def vector_transform(func, n_func = 3, width = 3, vector_dim = 3):
     n_matr = n_func * vector_dim
     e_vector = np.zeros(n_func)
     matr = np.zeros((n_matr, n_func))
-    func_val = np.zeros(vector_dim)
+    function_val = np.zeros(vector_dim)
     for i in range(0, vector_dim):
         x = (width/(vector_dim - 1))*(i - int(vector_dim/2))
-        func_val[i] = func(x)
+        function_val[i] = func(x)
 
     for i in range(0, n_func):
         e_vector[i] = 1
-        matr[:,i] = np.kron(e_vector, func_val)
+        matr[:,i] = np.kron(e_vector, function_val)
         e_vector[i] = 0
     return matr
 
