@@ -78,30 +78,48 @@ class Wavelet():
         self.grids = None
         self.base_scale = 1
         self.dim = dim
+        self._state = {
+            "X" : None,
+            "resolution" : resolution
+        }
+        self._obser = {
+            "orthogonality" : None,
+            "overlap_matrix" : None
+        }
         _console_print("_/\\__/\\__/\\__/\\__/\\__/\\__/\\__/\\_")
         _console_print(f"MRA started with {self.wavelet_type} wavelets")
         _console_print(f"resolution {self.resolution}; dilation {dilation}")
+        
+    def _update_state(self, update_dict):
+        for key in update_dict.keys():
+            self._state[key] = update_dict[key]
+            
+        # state_update of even single variable triggers nullification of observables
+        self._obser["orthogonality"] = None
+        
 
     def _gridify(self, wavelets_per_dim : int, X : np.array):
         wavelet_grids = []
-        Y = np.sqrt(self.base_scale)*np.array([self.wavefunction(self.base_scale*(x - 0.5*(X[0] + X[-1]))) for x in X])
+        scaling = self.dilation/(self.resolution*self.base_scale)
+        Y = np.sqrt(scaling)*np.array([self.wavefunction(scaling*(x - 0.5*(X[0] + X[-1]))) for x in X])
         dx = X[1] - X[0]
         norm_offset = np.sqrt(approxintegral(Y, Y, dx))
         Y = Y/norm_offset
-        scaling = self.dilation/(self.resolution*self.base_scale)
         
         if (self.dim == 2): 
             for i in range(0, wavelets_per_dim):
                 wavelet_grids.append([])
                 for j in range(0, wavelets_per_dim):
                     def temp_function(temp_i = i, temp_j = j) :
-                        return np.outer(self._eval_wavefunction(Y, utils.index_converter(temp_i, wavelets_per_dim), X, scaling), self._eval_wavefunction(Y, utils.index_converter(temp_j, wavelets_per_dim), X, scaling))
+                        Yi = self._eval_wavefunction(Y, utils.index_converter(temp_i, wavelets_per_dim), X, 1)
+                        Yj = self._eval_wavefunction(Y, utils.index_converter(temp_j, wavelets_per_dim), X, 1)
+                        return np.outer(Yi, Yj)
                     wavelet_grids[i].append(temp_function)
         
         if (self.dim == 1): 
             for i in range(0, wavelets_per_dim):
                 def temp_function(temp_i = i) : 
-                    return self._eval_wavefunction(Y, utils.index_converter(temp_i, wavelets_per_dim), X, scaling)
+                    return self._eval_wavefunction(Y, utils.index_converter(temp_i, wavelets_per_dim), X, 1)
                 wavelet_grids.append(temp_function)
         
         return wavelet_grids
@@ -161,12 +179,13 @@ class Wavelet():
         If score > 0.90, the overlap matrix is mildly diagonal and the basis is almost diagonal
         In other cases, the basis is non diagonal
         """
-        X = np.linspace(-10*self.resolution, 10*self.resolution, 100)
-        A = self.get_overlap_matrix(X)
-        diag_norm_sq = np.sum(np.diag(A)**2)
-        total_norm_sq = np.sum(A**2)
-        score =  diag_norm_sq / total_norm_sq
-        return score
+        if self._obser["orthogonality"] is None:
+            X = self._state["X"]
+            A = self.get_overlap_matrix(X)
+            diag_norm_sq = np.sum(np.diag(A)**2)
+            total_norm_sq = np.sum(A**2)
+            self._obser["orthogonality"] =  diag_norm_sq / total_norm_sq
+        return self._obser["orthogonality"]
     
     def get_reconstructed_func(self, coeffs : Union[list, np.array], X : np.array):
         n_wavelets = self.get_num_wavelets(X)
@@ -192,7 +211,7 @@ class Wavelet():
         score =  1 - np.var(y)
         return score
     
-    def get_mra_approx(self, function : Callable, X : np.array) -> tuple[np.array, np.array, np.array]:
+    def get_mra_approx(self, function : Callable, X : np.array, plotting_enabled = False) -> tuple[np.array, np.array, np.array]:
         """
             Get multi-resolution approximation of any given function
             Args:
@@ -213,24 +232,25 @@ class Wavelet():
             assert len(function_val) == len(X), "sizes of function and X do not match!"
         else: raise TypeError("Invalid data type for function")
         
+        self._update_state({"X" : X})
         approx_function = np.zeros(len(X))
         dx = X[1] - X[0]
         n_wavelets = self.get_num_wavelets(X)
         coeffs = np.zeros(n_wavelets) 
         
         if self.get_orthogonality() >= 0.99 :
-            _console_print("Orthogonal basis : Calculating coefficients of input function")
+            _console_print(f"Orthogonal basis (score = {self.get_orthogonality()}): Calculating coefficients of input function")
             Y0 = self.get_wavefunction_values(0, X)
-            _console_print("norm offset value : " + str(approxintegral(Y0, Y0, X[1] - X[0])))
+            _console_print("normalization offset value : " + str(approxintegral(Y0, Y0, X[1] - X[0])))
             _console_print("total basis function : " + str(n_wavelets))
             for i in range(0, n_wavelets):
-                y_new =  self.get_wavefunction_values(i - int(n_wavelets/2), X)
-                coeffs[i] = approxintegral(function_val, y_new, dx)
-                _console_print("calculating approx function : " + str(i))
-                approx_function +=  coeffs[i] * self.get_wavefunction_values(i - int(n_wavelets/2), X)
-                # plt.plot(X, coeffs[i] * self.get_wavefunction_values(i - int(n_wavelets/2), X))
+                Yi = self.get_wavefunction_values(i - int(n_wavelets/2), X)
+                coeffs[i] = approxintegral(function_val, Yi, dx)
+                # _console_print("calculating approx function : " + str(i))
+                approx_function += coeffs[i] * self.get_wavefunction_values(i - int(n_wavelets/2), X)
         else:
-            _console_print("Non orthogonal basis : Calculating overlap matrix")
+            _console_print(f"Non orthogonal basis (score = {self.get_orthogonality()}): Calculating overlap matrix")
+            _console_print("total basis function : " + str(n_wavelets))
             A = self.get_overlap_matrix(X)
             b = np.zeros(n_wavelets)
             for i in range(0, n_wavelets):
@@ -243,10 +263,13 @@ class Wavelet():
             _console_print("Calculating coefficients of input function")
             for i in range(0, n_wavelets):
                 approx_function +=  coeffs[i] *  self.get_wavefunction_values(i - int(n_wavelets/2), X)
-                # plt.plot(X, coeffs[i] * self.get_wavefunction_values(i - int(n_wavelets/2), X))
         error = np.mean((approx_function - function_val)**2)
-        _console_print("MRA Complete!")
+        _console_print(f"MRA Complete! : mean error = {error}")
         _console_print("_/\\__/\\__/\\__/\\__/\\__/\\__/\\__/\\_")
+        
+        if plotting_enabled:
+            for i in range(0, n_wavelets):
+                plt.plot(X, coeffs[i] * self.get_wavefunction_values(i - int(n_wavelets/2), X))
         return coeffs, approx_function, error
 
 class GaussletBasis(Wavelet):
